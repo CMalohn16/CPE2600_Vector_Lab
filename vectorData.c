@@ -86,37 +86,47 @@ void performOperation(char op, const char *a, const char *b, myVector *outputVec
 
     myVector vecA;
     myVector vecB;
+    myVector scaledVector;
     vecA = *(getVector((char*)a));
     vecB = *(getVector((char*)b));
+    float scalar;
+    float *scalar_ptr = &scalar;
 
     if (strstr(vecA.name, "ERROR"))
     {
-        printf("%s\n", vecA.name);
-    }
-    else if (strstr(vecB.name, "ERROR"))
-    {
-        printf("%s\n", vecB.name);
-    }
-    else
-    {
-        switch(op) 
+        if (!tokenToFloat(a, scalar_ptr))
         {
-            case '+':
-                add(&vecA, &vecB, outputVec);
-                break;
-            case '-':
-                sub(&vecA, &vecB, outputVec);
-                break;
-            case '*':
-                mult(&vecA, 0.0, outputVec);
-                break;
-            case 'x':
-                cross(&vecA, &vecB, outputVec);
-                break;
-            default:
-                printf("Invlaid operation: %c\n", op);
-                strcpy(outputVec->name, "ERROR|Invalid operation");
+            printf("%s\n", vecA.name);
+            return;
         }
+        scaledVector = vecB;
+    }
+    if (strstr(vecB.name, "ERROR"))
+    {
+        if (!tokenToFloat(b, scalar_ptr))
+        {
+            printf("%s\n", vecA.name);
+            return;
+        }
+        scaledVector = vecA;
+    }
+    switch(op) 
+    {
+        case '+':
+            add(&vecA, &vecB, outputVec);
+            break;
+        case '-':
+            sub(&vecA, &vecB, outputVec);
+            break;
+        case '*':
+            mult(&scaledVector, scalar, outputVec);
+            break;
+        case 'x':
+            cross(&vecA, &vecB, outputVec);
+            break;
+        default:
+            printf("Invlaid operation: %c\n", op);
+            strcpy(outputVec->name, "ERROR|Invalid operation");
     }
 }
 
