@@ -18,9 +18,6 @@
 
 static const char ops[6] = {'+', '-', '*', '.', 'x', '\0'};
 
-static myVector vectors[NUM_VECTORS];
-static myVector errorVec;
-
 void printVector(myVector* vector);
 myVector* getVector(char name[]);
 void store(myVector* vector);

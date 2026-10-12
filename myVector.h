@@ -9,7 +9,7 @@
 
 typedef struct 
 {
-    char name[10];
+    char name[100];
     float x;
     float y;
     float z;

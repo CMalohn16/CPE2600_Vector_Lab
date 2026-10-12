@@ -1,9 +1,9 @@
 /*
 * Filename: vectorCalc.c
 * Author: Charlie Malohn
-* Date: 10/1/2026
+* Date: 10/12/2026
 * Brief: Main vector calculator program
-* Compile: $ gcc -Wall operations.c vectorCalc.c vectorData.c -o vectorCalc
+* Compile with make
 */
 
 #include "vectorData.h"
@@ -15,17 +15,6 @@ int main(void)
 
     bool running = true;
 
-    myVector vec;
-    myVector* vec_ptr = &vec;
-    strcpy(vec_ptr->name, "vec");
-    vec.x = 10;
-    vec.y = 0.5;
-    vec_ptr->z = 2;
-    
-    printVector(vec_ptr);
-    add(vec_ptr, vec_ptr, vec_ptr);
-    printVector(vec_ptr);
-
     char input[MAX_INPUT_LENGTH];
     char *token1;
     char *token2;
@@ -34,10 +23,12 @@ int main(void)
     char *token5;
 
     do {
-        printf("Enter an operation to perform or \"help\" for a list of options\n");
+        printf("\nEnter an operation to perform or \"help\" for a list of options\n");
         printf("VectorCalc> ");
         fgets(input, MAX_INPUT_LENGTH, stdin);
 
+        //Tokenize input changing any nonexistent tokens to ""
+        //-----------------------------------------------------------------------------
         int numTokens = 0;
         token1 = strtok(input, " ,\n");
         if (token1)
@@ -89,13 +80,13 @@ int main(void)
         {
             token5 = "";
         }
-        
-        printf("Tokens: %s, %s, %s, %s, %s\n", 
-            token1, token2, token3, token4, token5
-        );
+
+        //Parse input
+        //----------------------------------------------------------------------
 
         myVector result;
         
+        //Basic one token commands
         if (!strcmp(token1, "quit") || !strcmp(token1, "exit"))
         {
             running = false;
@@ -114,6 +105,7 @@ int main(void)
         }
         else if (numTokens == 1)
         {
+            //If only one token is present and it is not a command, display that vector
             myVector *result_ptr = &result;
             result_ptr = getVector(token1);
             if (strstr(result_ptr->name, "ERROR"))
@@ -128,8 +120,10 @@ int main(void)
         else
         {
             char token2Char = *token2;
+            //If token2 is an operation, do the math and display the answer
             if (strchr(ops, token2Char))
             {
+                //Special case for dot product
                 if (token2Char == '.')
                 {
                     myVector dotVecA;
@@ -149,13 +143,20 @@ int main(void)
                         printf("ans = %f\n", dot(&dotVecA, &dotVecB));
                     }
                 }
-                else
+                else //Default case
                 {
                     performOperation(token2Char, token1, token3, &result);
-                    printVector(&result);
+                    if (strstr(result.name, "ERROR"))
+                    {
+                        printf("%s\n", result.name);
+                    }
+                    else
+                    {
+                        printVector(&result);
+                    }
                 }
             }
-            else if (token2Char == '=')
+            else if (token2Char == '=') //If token2 is =, assign a value
             {
                 if (strstr(token1, "ERROR")) 
                 {
@@ -165,7 +166,11 @@ int main(void)
                 {
                     strcpy(result.name, token1);
                     char token4Char = *token4;
-                    if (strchr(ops, token4Char))
+                    if (numTokens == 3)
+                    {
+                        result = *(getVector(token3));
+                    } 
+                    else if (strchr(ops, token4Char))
                     {
                         performOperation(token4Char, token3, token5, &result);
                     }
@@ -174,6 +179,7 @@ int main(void)
                         assign(&result, token3, token4, token5);
                     }
 
+                    //Check for any errors and don't assign a vector if an error is present
                     if (strstr(result.name, "ERROR"))
                     {
                         printf("%s", result.name);

@@ -1,11 +1,14 @@
 /*
 * Filename: vectorData.c
 * Author: Charlie Malohn
-* Date: 10/1/2026
+* Date: 10/12/2026
 * Brief: Stores an array of vectors and helper functions to access them
 */
 
 #include "vectorData.h"
+
+static myVector vectors[NUM_VECTORS];
+static myVector errorVec;
 
 void printVector(myVector* vector)
 {
@@ -14,7 +17,11 @@ void printVector(myVector* vector)
 
 myVector* getVector(char name[])
 {
-    printf("Getting Vector %s\n", name);
+    if (!strcmp(name, ""))
+    {
+        strcpy(errorVec.name, "ERROR|Vector \"\" not found");
+        return &errorVec;
+    }
     for (int i = 0; i < NUM_VECTORS; i++)
     {
         if (!strcmp(vectors[i].name, name))
@@ -22,8 +29,7 @@ myVector* getVector(char name[])
             return &(vectors[i]);
         }
     }
-    printf("Unable to find vector %s\n", name);
-    strcpy(errorVec.name, "ERROR|Vector not found");
+    sprintf(errorVec.name, "ERROR|Vector \"%s\" not found", name);
     return &errorVec;
 }
 
@@ -43,13 +49,10 @@ void store(myVector* vector)
             return;
         }
     }
-    printf("Storing Vector %s as ", vector->name);
-    printVector(vector);
 }
 
 void clearStorage()
 {
-    printf("Clearing Vector Storage\n");
     myVector emptyVec;
     strcpy(emptyVec.name, "");
     for (int i = 0; i < NUM_VECTORS; i++)
@@ -68,7 +71,7 @@ void displayHelp()
 
 void list()
 {
-    printf("Listing vectors\n");
+    printf("Listing vectors: \n");
     for (int i = 0; i < NUM_VECTORS; i++)
     {
         if (*(vectors[i].name))
@@ -80,35 +83,54 @@ void list()
 
 void performOperation(char op, const char *a, const char *b, myVector *outputVec)
 {
-    //Be sure to check for invalid operation (mostly "")
-    //So do a switch case with default case being error
-    printf("Performing Operation %c\n", op);
+    //Special case for scalar multiplication
+    if (op == '*')
+    {
+        float scalar;
+        float *scalar_ptr = &scalar;
+        myVector scaledVector;
+        if (tokenToFloat(a, scalar_ptr))
+        {
+            scaledVector = *(getVector((char*)b));
+            if (strstr(scaledVector.name, "ERROR"))
+            {
+                strcpy(outputVec->name, scaledVector.name);
+                return;
+            }
+        } 
+        else if (tokenToFloat(b, scalar_ptr))
+        {
+            scaledVector = *(getVector((char*)a));
+            if (strstr(scaledVector.name, "ERROR"))
+            {
+                strcpy(outputVec->name, scaledVector.name);
+                return;
+            }
+        } 
+        else
+        {
+            strcpy(outputVec->name, "ERROR|One of the operands must be a scalar");
+            return;
+        }
+        mult(&scaledVector, *scalar_ptr, outputVec);
+        return;
+    }
 
+    //Other operations
     myVector vecA;
     myVector vecB;
-    myVector scaledVector;
     vecA = *(getVector((char*)a));
     vecB = *(getVector((char*)b));
-    float scalar;
-    float *scalar_ptr = &scalar;
 
     if (strstr(vecA.name, "ERROR"))
     {
-        if (!tokenToFloat(a, scalar_ptr))
-        {
-            printf("%s\n", vecA.name);
-            return;
-        }
-        scaledVector = vecB;
+        strcpy(outputVec->name, vecA.name);
+        return;
     }
     if (strstr(vecB.name, "ERROR"))
     {
-        if (!tokenToFloat(b, scalar_ptr))
-        {
-            printf("%s\n", vecA.name);
-            return;
-        }
-        scaledVector = vecA;
+        strcpy(outputVec->name, vecB.name);
+        return;
     }
     switch(op) 
     {
@@ -118,14 +140,10 @@ void performOperation(char op, const char *a, const char *b, myVector *outputVec
         case '-':
             sub(&vecA, &vecB, outputVec);
             break;
-        case '*':
-            mult(&scaledVector, scalar, outputVec);
-            break;
         case 'x':
             cross(&vecA, &vecB, outputVec);
             break;
         default:
-            printf("Invlaid operation: %c\n", op);
             strcpy(outputVec->name, "ERROR|Invalid operation");
     }
 }
