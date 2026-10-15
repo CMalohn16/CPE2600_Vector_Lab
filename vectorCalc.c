@@ -7,6 +7,7 @@
 */
 
 #include "vectorData.h"
+#include "fileIO.h"
 
 #define MAX_INPUT_LENGTH 50
 
@@ -103,6 +104,18 @@ int main(void)
         {
             clearStorage();
         }
+        else if (!strcmp(token1, "load"))
+        {
+            int error = loadFromCSV(token2);
+            if (error < 0)
+            {
+                printf("Failed to open file %s", token2);
+            }
+            else if (error)
+            {
+                printf("Skipping %d vectors because of formatting issues\n", error);
+            }
+        }
         else if (numTokens == 1)
         {
             //If only one token is present and it is not a command, display that vector
@@ -183,11 +196,6 @@ int main(void)
                     if (strstr(result.name, "ERROR"))
                     {
                         printf("%s", result.name);
-                        printf("\nCanceling assignment\n");
-                    }
-                    else if(token4Char == '.')
-                    {
-                        printf("Cannot assign a dot product to a vector\n");
                         printf("\nCanceling assignment\n");
                     }
                     else

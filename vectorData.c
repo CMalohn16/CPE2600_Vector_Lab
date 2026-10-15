@@ -143,11 +143,21 @@ void performOperation(char op, const char *a, const char *b, myVector *outputVec
         case 'x':
             cross(&vecA, &vecB, outputVec);
             break;
+        case '.':
+            strcpy(outputVec->name, "ERROR|Cannot assign dot product to a vector");
+            break;
         default:
             strcpy(outputVec->name, "ERROR|Invalid operation");
     }
 }
 
+/**
+ * @brief Assigns given values to a vector
+ * @param vector Pointer to the vector to assign
+ * @param xTok String containing x value
+ * @param yTok Stirng containing y value
+ * @param zTok String containing z value
+ */
 void assign(myVector *vector, const char *xTok, const char *yTok, const char *zTok) 
 {
     float xNew, yNew, zNew;
