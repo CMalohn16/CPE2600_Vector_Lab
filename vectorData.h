@@ -14,8 +14,6 @@
 #include "myVector.h"
 #include "operations.h"
 
-#define NUM_VECTORS 10
-
 static const char ops[6] = {'+', '-', '*', '.', 'x', '\0'};
 
 void printVector(myVector* vector);
@@ -24,6 +22,8 @@ void store(myVector* vector);
 void clearStorage();
 void displayHelp();
 void list();
+void fill(int num);
+void generateName(int index, char name[]);
 void performOperation(char op, const char *a, const char *b, myVector *outputVec);
 void assign(myVector *vector, const char *xTok, const char *yTok, const char *zTok);
 bool tokenToFloat(const char *token, float *num);

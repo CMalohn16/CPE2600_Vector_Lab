@@ -6,6 +6,13 @@
 * Compile with make
 */
 
+
+/**
+ * @todo Implement node struct???
+ * @todo Add keyboard interrupt support so mem is cleared with ctrl+c
+ * @todo Write/save vectors to a csv file
+ */
+
 #include "vectorData.h"
 #include "fileIO.h"
 
@@ -90,6 +97,9 @@ int main(void)
         //Basic one token commands
         if (!strcmp(token1, "quit") || !strcmp(token1, "exit"))
         {
+            //Frees all used memory
+            clearStorage();
+            //Exits the program
             running = false;
         }
         else if (!strcmp(token1, "help"))
@@ -107,14 +117,23 @@ int main(void)
         else if (!strcmp(token1, "load"))
         {
             int error = loadFromCSV(token2);
+            //Negative error means failed to open file
             if (error < 0)
             {
-                printf("Failed to open file %s", token2);
+                printf("Failed to open file %s\n", token2);
             }
             else if (error)
             {
-                printf("Skipping %d vectors because of formatting issues\n", error);
+                printf("Skipping %d vector(s) because of formatting issues\n", error);
             }
+            else
+            {
+                printf("All vectors loaded properly\nRun \"list\" to see them\n");
+            }
+        }
+        else if (!strcmp(token1, "fill"))
+        {
+            fill(atoi(token2));
         }
         else if (numTokens == 1)
         {

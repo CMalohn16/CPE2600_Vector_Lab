@@ -7,10 +7,11 @@
 
 #pragma once
 
-typedef struct 
+typedef struct myVector
 {
     char name[100];
     float x;
     float y;
     float z;
+    struct myVector *next;
 } myVector;

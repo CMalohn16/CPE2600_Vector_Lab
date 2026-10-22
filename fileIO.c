@@ -16,7 +16,6 @@
  */
 int loadFromCSV(char *filename)
 {
-    printf("Loading from file %s\n", filename);
     FILE *file_ptr = fopen(filename, "r");
 
     if (file_ptr == NULL)
@@ -26,10 +25,51 @@ int loadFromCSV(char *filename)
 
     int numErrors = 0;
     char line[MAX_LINE_LENGTH];
+    myVector result;
+
     while (fgets(line, MAX_LINE_LENGTH, file_ptr) != NULL)
     {
-        printf("%s", line);
+        char *name;
+        char *xTok;
+        char *yTok;
+        char *zTok;
+
+        name = strtok(line, ",\r\n");
+        if (name)
+        {
+            name[strlen(name)] = '\0';
+        }
+        xTok = strtok(NULL, ",\r\n");
+        if (xTok)
+        {
+            xTok[strlen(xTok)] = '\0';
+        }
+        yTok = strtok(NULL, ",\r\n");
+        if (yTok)
+        {
+            yTok[strlen(yTok)] = '\0';
+        }
+        zTok = strtok(NULL, ",\r\n");
+        if (zTok)
+        {
+            zTok[strlen(zTok)] = '\0';
+        }
+
+        strcpy(result.name, name);
+        assign(&result, xTok, yTok, zTok);
+
+        if (strstr(result.name, "ERROR"))
+        {
+            strcpy(result.name, "");
+            numErrors++;
+        }
+        else
+        {
+            store(&result);
+        }
     }
+
+    fclose(file_ptr);
 
     return numErrors;
 }

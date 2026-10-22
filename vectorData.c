@@ -7,14 +7,23 @@
 
 #include "vectorData.h"
 
-static myVector vectors[NUM_VECTORS];
+static myVector *head;
 static myVector errorVec;
 
+/**
+ * Prints a vector to the console
+ */
 void printVector(myVector* vector)
 {
     printf("%s = <%.3f, %.3f, %.3f>\n", vector->name, vector->x, vector->y, vector->z);
 }
 
+/**
+ * Gets a stored vector address
+ * @param name The name of the vector to look for
+ * @return A pointer to the vector with a matching name
+ *         Returns a vector with an ERROR message if a vector is not found
+ */
 myVector* getVector(char name[])
 {
     if (!strcmp(name, ""))
@@ -22,65 +31,165 @@ myVector* getVector(char name[])
         strcpy(errorVec.name, "ERROR|Vector \"\" not found");
         return &errorVec;
     }
-    for (int i = 0; i < NUM_VECTORS; i++)
+    myVector *currentVector = head;
+    
+    while (currentVector)
     {
-        if (!strcmp(vectors[i].name, name))
+        if (!strcmp(currentVector->name, name))
         {
-            return &(vectors[i]);
+            return currentVector;
         }
+        currentVector = currentVector->next;
     }
     sprintf(errorVec.name, "ERROR|Vector \"%s\" not found", name);
     return &errorVec;
 }
 
+/**
+ * @brief Adds a vector to the linked list of stored vectors
+ * @param vector Address of the vector to store
+ */
 void store(myVector* vector)
 {
-    bool done = false;
-    for (int i = 0; i < NUM_VECTORS && !done; i++)
+    //Set aside some memory for the new vector
+    myVector *vecPtr = malloc(sizeof(myVector));
+    //Copy data to be stored into the new memory location
+    memcpy(vecPtr, vector, sizeof(myVector));
+    vecPtr->next = NULL;
+    if (!head)
     {
-        if (!*(vectors[i].name) || !strcmp(vectors[i].name, vector->name))
+        //If the head is not assigned set it to the new vector
+        head = vecPtr;
+        return;
+    }
+    myVector *currentVector = head;
+    while (currentVector)
+    {
+        if (!strcmp(currentVector->name, vecPtr->name))
         {
-            vectors[i] = *vector;
-            done = true;
-        }
-        if (i == NUM_VECTORS - 1)
-        {
-            printf("Out of space. Run \"clear\" to clear vector storage");
+            //Updating an existing vector since the names match
+            myVector *nextAddress = currentVector->next;
+            //Copy the contents of the new pointer into the new memory location
+            memcpy(currentVector, vecPtr, sizeof(myVector));
+            free(vecPtr);
+            //This new vector still needs to point to the next one in the linked list
+            currentVector->next = nextAddress;
             return;
         }
+        if (!currentVector->next)
+        {
+            //Since the end of the list has been reached and no vector with the
+            //given name exists, add the new vector to the end
+            currentVector->next = vecPtr;
+            return;
+        }
+        currentVector = currentVector->next;
     }
 }
 
+/**
+ * @brief Removes all stored vectors and frees all allocated memory
+ */
 void clearStorage()
 {
-    myVector emptyVec;
-    strcpy(emptyVec.name, "");
-    for (int i = 0; i < NUM_VECTORS; i++)
+    myVector *currentVector = head;
+    myVector *addr;
+    while (currentVector)
     {
-        vectors[i] = emptyVec;
+        addr = currentVector;
+        currentVector = currentVector->next;
+        free(addr);
     }
+    head = NULL;
 }
 
+/**
+ * @brief Displays a help menu for the user
+ */
 void displayHelp()
 {
     printf("  help -> Display this guide\n");
     printf("  quit/exit -> Close the program\n");
     printf("  list -> List all stored vectors (up to 10)\n");
-    printf("  clear -> Clear all stored vectors\n\n");
+    printf("  clear -> Clear all stored vectors\n");
+    printf("  fill <uint16_t num> -> Creates \"num\" new random vectors\n");
+    printf("  load <filename> loads from a csv file\n\n");
 }
 
+/**
+ * @brief Lists out all vectors currently in storage
+ */
 void list()
 {
     printf("Listing vectors: \n");
-    for (int i = 0; i < NUM_VECTORS; i++)
+
+    myVector *currentVector = head;
+    while(currentVector)
     {
-        if (*(vectors[i].name))
+        if (*(currentVector->name))
         {
-            printVector(&(vectors[i]));
+            printVector(currentVector);
+        }
+        currentVector = currentVector->next;
+    }
+}
+
+/**
+ * @brief Adds random vectors to storage
+ * @param num Number of vectors to store
+ */
+void fill(int num)
+{
+    myVector *fillVecPtr = malloc(sizeof(myVector));
+    char name[sizeof(int) * 2 + 1];
+    for (int i = 0; i < num; i++)
+    {
+        name[0] = '\0';
+        generateName(i, name);
+        strcpy(fillVecPtr->name, name);
+        fillVecPtr->x = rand() % 100;
+        fillVecPtr->y = rand() % 100;
+        fillVecPtr->z = rand() % 100;
+        store(fillVecPtr);
+    }
+    free(fillVecPtr);
+}
+
+/**
+ * @brief Generates a name for a random vector from the fill() function
+ * @param index number to convert to vector name
+ * @param name Pointer to the where the name should be stored
+ * @return vector name
+ */
+void generateName(int index, char name[])
+{
+    index++;
+    bool started = false;
+    int mask;
+    for (int i = sizeof(int) * 2 - 1; i >= 0; i--)
+    {
+        mask = 0xF << (i * 4);
+        if ((mask & index) > 0)
+        {
+            started = true;
+        }
+        if (started)
+        {
+            int len = strlen(name);
+            name[len] = (char)(((mask & index) >> (i * 4)) + 97);
+            name[len + 1] = '\0';
         }
     }
 }
 
+
+/**
+ * @brief Performs the vector operation passed in
+ * @param op operation to perform
+ * @param a string representing the first operand
+ * @param b string representing the second operand
+ * @param outputVec vector pointer to store the result in
+ */
 void performOperation(char op, const char *a, const char *b, myVector *outputVec)
 {
     //Special case for scalar multiplication
@@ -160,6 +269,11 @@ void performOperation(char op, const char *a, const char *b, myVector *outputVec
  */
 void assign(myVector *vector, const char *xTok, const char *yTok, const char *zTok) 
 {
+    if (!xTok || !yTok || !zTok)
+    {
+        strcpy(vector->name, "ERROR|Invalid float");
+        return;
+    }
     float xNew, yNew, zNew;
     float *xNewPtr = &xNew;
     float *yNewPtr = &yNew;
