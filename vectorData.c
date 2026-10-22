@@ -51,27 +51,23 @@ myVector* getVector(char name[])
  */
 void store(myVector* vector)
 {
-    //Set aside some memory for the new vector
-    myVector *vecPtr = malloc(sizeof(myVector));
-    //Copy data to be stored into the new memory location
-    memcpy(vecPtr, vector, sizeof(myVector));
-    vecPtr->next = NULL;
     if (!head)
     {
         //If the head is not assigned set it to the new vector
-        head = vecPtr;
+        head = malloc(sizeof(myVector));
+        memcpy(head, vector, sizeof(myVector));
+        head->next = NULL;
         return;
     }
     myVector *currentVector = head;
     while (currentVector)
     {
-        if (!strcmp(currentVector->name, vecPtr->name))
+        if (!strcmp(currentVector->name, vector->name))
         {
             //Updating an existing vector since the names match
             myVector *nextAddress = currentVector->next;
             //Copy the contents of the new pointer into the new memory location
-            memcpy(currentVector, vecPtr, sizeof(myVector));
-            free(vecPtr);
+            memcpy(currentVector, vector, sizeof(myVector));
             //This new vector still needs to point to the next one in the linked list
             currentVector->next = nextAddress;
             return;
@@ -79,7 +75,11 @@ void store(myVector* vector)
         if (!currentVector->next)
         {
             //Since the end of the list has been reached and no vector with the
-            //given name exists, add the new vector to the end
+            //given name exists, allocate one vector of memory and store the new vector there
+            myVector *vecPtr = malloc(sizeof(myVector));
+            //Copy data to be stored into the new memory location
+            memcpy(vecPtr, vector, sizeof(myVector));
+            vecPtr->next = NULL;
             currentVector->next = vecPtr;
             return;
         }
@@ -113,7 +113,8 @@ void displayHelp()
     printf("  list -> List all stored vectors (up to 10)\n");
     printf("  clear -> Clear all stored vectors\n");
     printf("  fill <uint16_t num> -> Creates \"num\" new random vectors\n");
-    printf("  load <filename> loads from a csv file\n\n");
+    printf("  load <filename> loads from a csv file\n");
+    printf("  save filename -> saves all vectors to specified csv file\n\n");
 }
 
 /**
@@ -132,6 +133,137 @@ void list()
         }
         currentVector = currentVector->next;
     }
+}
+
+myVector *getHead()
+{
+    return head;
+}
+
+
+/**
+ * @brief Performs the vector operation passed in
+ * @param op operation to perform
+ * @param a string representing the first operand
+ * @param b string representing the second operand
+ * @param outputVec vector pointer to store the result in
+ */
+void performOperation(char op, const char *a, const char *b, myVector *outputVec)
+{
+    //Special case for scalar multiplication
+    if (op == '*')
+    {
+        float scalar;
+        float *scalar_ptr = &scalar;
+        myVector scaledVector;
+        if (tokenToFloat(a, scalar_ptr))
+        {
+            scaledVector = *(getVector((char*)b));
+            if (strstr(scaledVector.name, "ERROR"))
+            {
+                strcpy(outputVec->name, scaledVector.name);
+                return;
+            }
+        } 
+        else if (tokenToFloat(b, scalar_ptr))
+        {
+            scaledVector = *(getVector((char*)a));
+            if (strstr(scaledVector.name, "ERROR"))
+            {
+                strcpy(outputVec->name, scaledVector.name);
+                return;
+            }
+        } 
+        else
+        {
+            strcpy(outputVec->name, "ERROR|One of the operands must be a scalar");
+            return;
+        }
+        mult(&scaledVector, *scalar_ptr, outputVec);
+        return;
+    }
+    
+    //Other operations
+    myVector vecA;
+    myVector vecB;
+    vecA = *(getVector((char*)a));
+    vecB = *(getVector((char*)b));
+    
+    if (strstr(vecA.name, "ERROR"))
+    {
+        strcpy(outputVec->name, vecA.name);
+        return;
+    }
+    if (strstr(vecB.name, "ERROR"))
+    {
+        strcpy(outputVec->name, vecB.name);
+        return;
+    }
+    switch(op) 
+    {
+        case '+':
+        add(&vecA, &vecB, outputVec);
+        break;
+        case '-':
+        sub(&vecA, &vecB, outputVec);
+        break;
+        case 'x':
+        cross(&vecA, &vecB, outputVec);
+        break;
+        case '.':
+        strcpy(outputVec->name, "ERROR|Cannot assign dot product to a vector");
+        break;
+        default:
+        strcpy(outputVec->name, "ERROR|Invalid operation");
+    }
+}
+
+/**
+ * @brief Assigns given values to a vector
+ * @param vector Pointer to the vector to assign
+ * @param xTok String containing x value
+ * @param yTok Stirng containing y value
+ * @param zTok String containing z value
+ */
+void assign(myVector *vector, const char *xTok, const char *yTok, const char *zTok) 
+{
+    if (!xTok || !yTok || !zTok)
+    {
+        strcpy(vector->name, "ERROR|Invalid float");
+        return;
+    }
+    float xNew, yNew, zNew;
+    float *xNewPtr = &xNew;
+    float *yNewPtr = &yNew;
+    float *zNewPtr = &zNew;
+    if (tokenToFloat(xTok, xNewPtr) && tokenToFloat(yTok, yNewPtr) && tokenToFloat(zTok, zNewPtr))
+    {
+        vector->x = *xNewPtr;
+        vector->y = *yNewPtr;
+        vector->z = *zNewPtr;
+    }
+    else
+    {
+        strcpy(vector->name, "ERROR|Invalid float");
+    }
+}
+
+/**
+ * @brief Converts a string to a float
+ * @param token The string to convert to a float
+ * @param num pointer to a float representing the result
+ * @return True if the conversion was successful and 
+ false if the string does not represent a float
+ */
+bool tokenToFloat(const char *token, float *num)
+{
+    char *endptr;
+    *num = strtof(token, &endptr);
+    if (token == endptr)
+    {
+        return false;
+    }
+    return true;
 }
 
 /**
@@ -180,130 +312,4 @@ void generateName(int index, char name[])
             name[len + 1] = '\0';
         }
     }
-}
-
-
-/**
- * @brief Performs the vector operation passed in
- * @param op operation to perform
- * @param a string representing the first operand
- * @param b string representing the second operand
- * @param outputVec vector pointer to store the result in
- */
-void performOperation(char op, const char *a, const char *b, myVector *outputVec)
-{
-    //Special case for scalar multiplication
-    if (op == '*')
-    {
-        float scalar;
-        float *scalar_ptr = &scalar;
-        myVector scaledVector;
-        if (tokenToFloat(a, scalar_ptr))
-        {
-            scaledVector = *(getVector((char*)b));
-            if (strstr(scaledVector.name, "ERROR"))
-            {
-                strcpy(outputVec->name, scaledVector.name);
-                return;
-            }
-        } 
-        else if (tokenToFloat(b, scalar_ptr))
-        {
-            scaledVector = *(getVector((char*)a));
-            if (strstr(scaledVector.name, "ERROR"))
-            {
-                strcpy(outputVec->name, scaledVector.name);
-                return;
-            }
-        } 
-        else
-        {
-            strcpy(outputVec->name, "ERROR|One of the operands must be a scalar");
-            return;
-        }
-        mult(&scaledVector, *scalar_ptr, outputVec);
-        return;
-    }
-
-    //Other operations
-    myVector vecA;
-    myVector vecB;
-    vecA = *(getVector((char*)a));
-    vecB = *(getVector((char*)b));
-
-    if (strstr(vecA.name, "ERROR"))
-    {
-        strcpy(outputVec->name, vecA.name);
-        return;
-    }
-    if (strstr(vecB.name, "ERROR"))
-    {
-        strcpy(outputVec->name, vecB.name);
-        return;
-    }
-    switch(op) 
-    {
-        case '+':
-            add(&vecA, &vecB, outputVec);
-            break;
-        case '-':
-            sub(&vecA, &vecB, outputVec);
-            break;
-        case 'x':
-            cross(&vecA, &vecB, outputVec);
-            break;
-        case '.':
-            strcpy(outputVec->name, "ERROR|Cannot assign dot product to a vector");
-            break;
-        default:
-            strcpy(outputVec->name, "ERROR|Invalid operation");
-    }
-}
-
-/**
- * @brief Assigns given values to a vector
- * @param vector Pointer to the vector to assign
- * @param xTok String containing x value
- * @param yTok Stirng containing y value
- * @param zTok String containing z value
- */
-void assign(myVector *vector, const char *xTok, const char *yTok, const char *zTok) 
-{
-    if (!xTok || !yTok || !zTok)
-    {
-        strcpy(vector->name, "ERROR|Invalid float");
-        return;
-    }
-    float xNew, yNew, zNew;
-    float *xNewPtr = &xNew;
-    float *yNewPtr = &yNew;
-    float *zNewPtr = &zNew;
-    if (tokenToFloat(xTok, xNewPtr) && tokenToFloat(yTok, yNewPtr) && tokenToFloat(zTok, zNewPtr))
-    {
-        vector->x = *xNewPtr;
-        vector->y = *yNewPtr;
-        vector->z = *zNewPtr;
-    }
-    else
-    {
-        strcpy(vector->name, "ERROR|Invalid float");
-    }
-}
-
-/**
-* @brief Converts a string to a float
-* @param token The string to convert to a float
-* @param num pointer to a float representing the result
-* @return True if the conversion was successful and 
-            false if the string does not represent a float
- */
-bool tokenToFloat(const char *token, float *num)
-{
-    char *endptr;
-    *num = strtof(token, &endptr);
-    if (token == endptr)
-    {
-        return false;
-    }
-    return true;
 }

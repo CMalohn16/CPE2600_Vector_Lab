@@ -14,6 +14,7 @@ Using a command line, cd into CPE2600_Vector_Lab and run "make"
 - clear -> Clear all stored vectors
 - fill num -> Creates \"num\" new random vectors
 - load filename -> loads from a csv file
+- save filename -> saves all vectors to specified csv file
 ### Vectors
 - entering a vector name alone will print that vector
 - perform operations using +, -, *, ., and x. Examples: a . b and c * 3

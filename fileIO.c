@@ -73,3 +73,23 @@ int loadFromCSV(char *filename)
 
     return numErrors;
 }
+
+int saveToCSV(char *filename)
+{
+    FILE *file_ptr = fopen(filename, "w");
+    
+    myVector *currentVector = getHead();
+    while(currentVector)
+    {
+        fprintf(file_ptr, "%s,%f,%f,%f\n", 
+            currentVector->name, 
+            currentVector->x, 
+            currentVector->y, 
+            currentVector->z
+        );
+        currentVector = currentVector->next;
+    }
+
+    fclose(file_ptr);
+    return 0;
+}

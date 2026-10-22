@@ -8,9 +8,7 @@
 
 
 /**
- * @todo Implement node struct???
  * @todo Add keyboard interrupt support so mem is cleared with ctrl+c
- * @todo Write/save vectors to a csv file
  */
 
 #include "vectorData.h"
@@ -130,6 +128,10 @@ int main(void)
             {
                 printf("All vectors loaded properly\nRun \"list\" to see them\n");
             }
+        }
+        else if (!strcmp(token1, "save"))
+        {
+            saveToCSV(token2);
         }
         else if (!strcmp(token1, "fill"))
         {

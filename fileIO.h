@@ -12,3 +12,4 @@
 #define MAX_LINE_LENGTH 50
 
 int loadFromCSV(char *filename);
+int saveToCSV(char *filename);

@@ -22,6 +22,7 @@ void store(myVector* vector);
 void clearStorage();
 void displayHelp();
 void list();
+myVector *getHead();
 void fill(int num);
 void generateName(int index, char name[]);
 void performOperation(char op, const char *a, const char *b, myVector *outputVec);
