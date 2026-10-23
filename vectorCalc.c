@@ -7,10 +7,6 @@
 */
 
 
-/**
- * @todo Add keyboard interrupt support so mem is cleared with ctrl+c
- */
-
 #include "vectorData.h"
 #include "fileIO.h"
 

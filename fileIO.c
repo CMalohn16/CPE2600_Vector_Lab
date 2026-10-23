@@ -74,6 +74,11 @@ int loadFromCSV(char *filename)
     return numErrors;
 }
 
+/**
+ * @brief Saves all stored vectors to a csv file
+ * @param filename Name of the file to save the vectors in
+ * @return 0 when executed successfully
+ */
 int saveToCSV(char *filename)
 {
     FILE *file_ptr = fopen(filename, "w");
